@@ -1,0 +1,46 @@
+gatellm:
+  provider: ${GATELLM_PROVIDER:mock}
+  anthropic-api-key: ${ANTHROPIC_API_KEY:}
+  max-output-tokens: 1024
+  timeout-seconds: 30
+  targets:
+    - provider: anthropic
+      model: claude-haiku-5-5
+    - provider: anthropic
+      model: claude-sonnet-5-5
+  api-keys:
+    # Default dev key: "gk-test-key-1"
+    # Generate hash: echo -n "your-key" | sha256sum | cut -d' ' -f1
+    # Or run: ./run-local.sh which prints the hash for "gk-test-key-1"
+    - api-key-id: dev-user-1
+      key-hash: "${GATELLM_DEV_KEY_HASH:placeholder}"
+      rate-limit-per-minute: 10
+      daily-token-budget: 100000
+  mock:
+    latency-ms: 200
+    failure-rate: 0.0
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      repositories:
+        enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.gatellm: DEBUG

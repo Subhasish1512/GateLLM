@@ -1,0 +1,4 @@
+#!/bin/bash
+export GRADLE_HOME="$HOME/.gradle/wrapper/dists/gradle-8.12-bin/gradle-8.12"
+export PATH="$GRADLE_HOME/bin:$PATH"
+exec gradle "$@"
