@@ -1,3 +1,13 @@
+spring:
+  config:
+    import: "optional:file:.env"
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      repositories:
+        enabled: false
+
 gatellm:
   provider: ${GATELLM_PROVIDER:mock}
   anthropic-api-key: ${ANTHROPIC_API_KEY:}
@@ -19,14 +29,6 @@ gatellm:
   mock:
     latency-ms: 200
     failure-rate: 0.0
-
-spring:
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      repositories:
-        enabled: false
 
 management:
   endpoints:

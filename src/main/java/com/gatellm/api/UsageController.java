@@ -4,11 +4,6 @@ import com.gatellm.ratelimit.RateLimiterService;
 import com.gatellm.ratelimit.UsageService;
 import com.gatellm.security.AuthenticatedKeyResolver;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +20,6 @@ import java.time.ZoneOffset;
  */
 @RestController
 @Tag(name = "Usage", description = "Usage tracking and quota information")
-@SecurityRequirement(name = "apiKey")
 public class UsageController {
 
     private static final Logger log = LoggerFactory.getLogger(UsageController.class);
@@ -43,15 +37,7 @@ public class UsageController {
     }
 
     @GetMapping("/usage")
-    @Operation(summary = "Get current day's usage statistics",
-            description = "Returns usage stats for the authenticated API key for the current UTC day. Does not consume rate limit or token budget.",
-            security = @SecurityRequirement(name = "apiKey"))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Usage statistics retrieved successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsageResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Invalid or missing API key",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @Operation(summary = "Get current day's usage statistics")
     public ResponseEntity<UsageResponse> getUsage() {
         var keyProps = keyResolver.getKeyProperties();
         String apiKeyId = keyProps.apiKeyId();

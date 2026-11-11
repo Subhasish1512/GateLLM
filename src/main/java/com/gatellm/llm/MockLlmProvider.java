@@ -3,11 +3,11 @@ package com.gatellm.llm;
 import com.gatellm.config.GateLlmProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
 
-@Component
 public class MockLlmProvider implements LlmProvider {
 
     private static final Logger log = LoggerFactory.getLogger(MockLlmProvider.class);

@@ -10,12 +10,6 @@ import com.gatellm.security.AuthenticatedKeyResolver;
 import com.gatellm.security.PiiRedactor;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -32,7 +26,6 @@ import java.time.ZoneOffset;
 
 @RestController
 @Tag(name = "Chat", description = "LLM chat completion endpoint")
-@SecurityRequirement(name = "apiKey")
 public class ChatController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
@@ -62,36 +55,23 @@ public class ChatController {
     }
 
     @PostMapping("/chat")
-    @Operation(summary = "Send a chat completion request",
-            description = "Sends a prompt to the LLM gateway. The gateway applies rate limiting, daily token budget, PII redaction, and routes to the cheapest available model with fallback on failure.",
-            security = @SecurityRequirement(name = "apiKey"))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful response",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ChatResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request (validation error)",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Invalid or missing API key",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "429", description = "Rate limit or daily token budget exceeded",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)),
-                    headers = {
-                            @io.swagger.v3.oas.annotations.headers.Header(name = "Retry-After", description = "Seconds until retry allowed", schema = @Schema(type = "integer"))
-                    }),
-            @ApiResponse(responseCode = "502", description = "All upstream LLM providers failed",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<ChatResponse> chat(
-            @Valid
-            @RequestBody(description = "Chat request with prompt", required = true,
-                    content = @Content(schema = @Schema(implementation = ChatRequest.class)))
-            ChatRequest request) {
+    @Operation(summary = "Send a chat completion request")
+    public ResponseEntity<?> chat(@Valid @org.springframework.web.bind.annotation.RequestBody ChatRequest request) {
+
+        log.debug("Received request: prompt='{}', prompt.length={}", request.getPrompt(),
+                request.getPrompt() != null ? request.getPrompt().length() : -1);
+        log.debug("Request object: {}", request);
+
+        if (request.getPrompt() == null || request.getPrompt().trim().isEmpty()) {
+            log.warn("Prompt validation failed: prompt is null or empty");
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, "Prompt must not be blank"));
+        }
+
         var keyProps = keyResolver.getKeyProperties();
         String apiKeyId = keyProps.apiKeyId();
 
         log.debug("Chat request from '{}' (prompt length: {} chars)",
-                apiKeyId, request.prompt().length());
+                apiKeyId, request.getPrompt().length());
 
         // Start latency timer
         Timer.Sample latencySample = metrics.startLatency();
@@ -117,7 +97,7 @@ public class ChatController {
         }
 
         // 3. PII redaction - mask emails and phones before sending to LLM
-        String redactedPrompt = piiRedactor.redact(request.prompt());
+        String redactedPrompt = piiRedactor.redact(request.getPrompt());
 
         // 4. Cap maxOutputTokens so a single request cannot overshoot far
         int cappedMaxTokens = (int) Math.min(configuredMaxOutputTokens, budgetRemaining);

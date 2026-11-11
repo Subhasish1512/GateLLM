@@ -20,7 +20,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
 public class AnthropicProvider implements LlmProvider {
 
     private static final Logger log = LoggerFactory.getLogger(AnthropicProvider.class);
