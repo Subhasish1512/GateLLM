@@ -13,6 +13,8 @@ gatellm:
   anthropic-api-key: ${ANTHROPIC_API_KEY:}
   max-output-tokens: 1024
   timeout-seconds: 30
+  mock-latency-ms: ${GATELLM_MOCK_LATENCY_MS:200}
+  mock-failure-rate: ${GATELLM_MOCK_FAILURE_RATE:0.0}
   targets:
     - provider: anthropic
       model: claude-haiku-5-5
@@ -26,9 +28,6 @@ gatellm:
       key-hash: "${GATELLM_DEV_KEY_HASH:placeholder}"
       rate-limit-per-minute: 10
       daily-token-budget: 100000
-  mock:
-    latency-ms: 200
-    failure-rate: 0.0
 
 management:
   endpoints:

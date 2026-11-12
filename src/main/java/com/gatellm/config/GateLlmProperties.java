@@ -13,7 +13,8 @@ public record GateLlmProperties(
         @DefaultValue("30") int timeoutSeconds,
         @DefaultValue List<TargetProperties> targets,
         @DefaultValue List<ApiKeyProperties> apiKeys,
-        MockProperties mock
+        @DefaultValue("200") long mockLatencyMs,
+        @DefaultValue("0.5") double mockFailureRate
 ) {
 
     public record TargetProperties(
@@ -26,10 +27,5 @@ public record GateLlmProperties(
             String keyHash,
             @DefaultValue("10") int rateLimitPerMinute,
             @DefaultValue("100000") int dailyTokenBudget
-    ) {}
-
-    public record MockProperties(
-            @DefaultValue("200") long latencyMs,
-            @DefaultValue("0.0") double failureRate
     ) {}
 }

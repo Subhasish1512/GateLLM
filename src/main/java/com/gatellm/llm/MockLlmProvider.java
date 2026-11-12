@@ -17,9 +17,8 @@ public class MockLlmProvider implements LlmProvider {
     private final Random random;
 
     public MockLlmProvider(GateLlmProperties properties) {
-        var mock = properties.mock();
-        this.latencyMs = mock != null ? mock.latencyMs() : 200;
-        this.failureRate = mock != null ? mock.failureRate() : 0.0;
+        this.latencyMs = properties.mockLatencyMs();
+        this.failureRate = properties.mockFailureRate();
         this.random = new Random();
         log.info("MockLlmProvider initialized: latency={}ms, failureRate={}", latencyMs, failureRate);
     }
