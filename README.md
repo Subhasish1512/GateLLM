@@ -399,20 +399,43 @@ Checks:
 
 ---
 
-## Design Decisions
+## Adding a New LLM Provider
 
-| Decision | Rationale |
-|----------|-----------|
-| **No caching** | LLM responses are non-deterministic; caching adds complexity without clear benefit |
-| **No embeddings** | Out of scope — this is a gateway, not a RAG system |
-| **Redis for rate limiting + budgets** | Atomic Lua scripts prevent race conditions; single source of truth |
-| **SHA-256 + constant-time compare** | Prevents timing attacks on API keys; standard security practice |
-| **UTC midnight budget reset** | Unambiguous, timezone-independent, matches billing cycles |
-| **PII redaction before LLM call** | Data never leaves your infrastructure in raw form |
-| **Provider-independent error types** | Router decides fallback without knowing provider specifics |
-| **Micrometer + Prometheus** | Industry standard, works with any Prometheus-compatible backend |
-| **Constructor injection only** | Testable, explicit dependencies, no field injection magic |
-| **Mock provider for dev/test** | Zero external dependencies for local development and CI |
+To gate a new model/provider, you need:
+
+### 1. New Provider Class
+Create `src/main/java/com/gatellm/llm/<Provider>Provider.java` implementing `LlmProvider`:
+- `name()` — unique id (e.g., `"openrouter"`)
+- `call(modelId, prompt, maxOutputTokens)` → `LlmResponse`
+- Map provider request/response format
+- Map HTTP errors → `LlmProviderException.ErrorType` (RATE_LIMITED, UNAVAILABLE, CLIENT_ERROR, UNKNOWN)
+
+### 2. Configuration (`GateLlmProperties.java`)
+Add fields to the record:
+```java
+@DefaultValue("") String <provider>ApiKey;
+@DefaultValue("https://api.provider.com") String <provider>BaseUrl;
+@DefaultValue("default-model") String <provider>Model;
+```
+
+### 3. Router Registration (`LlmRouter.java`)
+Add provider bean to constructor (order = cost priority, cheapest first)
+
+### 4. Targets + Config (`application.yml`)
+```yaml
+gatellm:
+  targets:
+    - provider: <provider-name>
+      model: <model-id>
+  <provider>-api-key: ${<PROVIDER>_API_KEY:}
+  <provider>-base-url: https://api.provider.com
+  <provider>-model: <default-model>
+```
+
+### 5. Environment (`.env.example`)
+```bash
+<PROVIDER>_API_KEY=your-key-here
+```
 
 ---
 
